@@ -1,12 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const crypto = require("crypto");
+const cookieParser = require("cookie-parser");
 const { findKeywordMatch } = require("./modules/keywordReply");
 const { getAIReply } = require("./modules/aiReply");
 const { buildLineMessage } = require("./modules/lineRedirect");
+const { callSendAPI } = require("./modules/messenger");
+const { initDB, upsertSubscriber } = require("./modules/database");
+const { startScheduler } = require("./modules/scheduler");
+const adminRoutes = require("./admin/adminRoutes");
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json({ verify: verifySignature }));
 
 function verifySignature(req, _res, buf) {
@@ -54,6 +60,14 @@ app.post("/webhook", async (req, res) => {
 async function handleMessage(senderId, text) {
   console.log(`收到訊息 [${senderId}]: ${text}`);
 
+  // 自動收集訂閱者
+  const updateFields = {};
+  const phoneMatch = text.match(/09\d{8}/);
+  const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
+  if (phoneMatch) updateFields.phone = phoneMatch[0];
+  if (emailMatch) updateFields.email = emailMatch[0];
+  upsertSubscriber(senderId, updateFields);
+
   try {
     const keywordMatch = findKeywordMatch(text);
 
@@ -96,28 +110,20 @@ async function sendLineButton(recipientId) {
   }
 }
 
-async function callSendAPI(requestBody) {
-  const url = `https://graph.facebook.com/v21.0/me/messages?access_token=${process.env.FB_PAGE_ACCESS_TOKEN}`;
+// 管理後台
+app.use("/admin", adminRoutes);
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error("Facebook API 錯誤:", JSON.stringify(error));
-  }
-}
-
-// 健康檢查（含版本標記，用來確認部署是否更新）
-const BOT_VERSION = "v2.1-20260728";
+// 健康檢查
+const BOT_VERSION = "v3.0-broadcast";
 app.get("/", (_req, res) => {
   res.send(`品慧老師 Messenger 機器人運作中 ✅ 版本: ${BOT_VERSION}`);
 });
 
+// 啟動伺服器
+initDB();
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🤖 機器人伺服器已啟動，端口: ${PORT}`);
+  startScheduler();
 });

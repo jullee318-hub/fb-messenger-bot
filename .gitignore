@@ -72,6 +72,9 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
+# 資料庫（本地開發用）
+data/
+
 # dotenv environment variable files
 .env
 .env.development.local

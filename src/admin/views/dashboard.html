@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>意轉靈升 - 機器人管理後台</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f5f0ff; color: #2d3748; line-height: 1.6; }
+    .header { background: linear-gradient(135deg, #6b46c1, #9f7aea); color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 20px; }
+    .header a { color: white; text-decoration: none; font-size: 14px; opacity: 0.8; }
+    .header a:hover { opacity: 1; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 20px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    .tab.active { background: #6b46c1; color: white; border-color: #6b46c1; }
+    .tab:hover:not(.active) { border-color: #6b46c1; color: #6b46c1; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 18px; color: #6b46c1; margin-bottom: 16px; }
+    textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; font-family: inherit; resize: vertical; min-height: 100px; outline: none; }
+    textarea:focus { border-color: #6b46c1; }
+    input[type="datetime-local"] { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; width: 100%; }
+    input[type="datetime-local"]:focus { border-color: #6b46c1; }
+    select { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; width: 100%; background: white; }
+    label { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 12px 0; cursor: pointer; }
+    label input[type="checkbox"] { width: 18px; height: 18px; }
+    .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #6b46c1; color: white; }
+    .btn-primary:hover { background: #553c9a; }
+    .btn-danger { background: #e53e3e; color: white; font-size: 13px; padding: 6px 14px; }
+    .btn-danger:hover { background: #c53030; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 6px; display: block; }
+    .warning { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 8px; padding: 12px; font-size: 13px; color: #744210; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; background: #f7fafc; border-bottom: 2px solid #e2e8f0; color: #4a5568; font-size: 13px; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+    tr:hover { background: #f7fafc; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-green { background: #c6f6d5; color: #22543d; }
+    .badge-yellow { background: #fefcbf; color: #744210; }
+    .badge-red { background: #fed7d7; color: #9b2c2c; }
+    .empty { text-align: center; color: #a0aec0; padding: 40px; font-size: 15px; }
+    .stat-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 120px; background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-num { font-size: 28px; font-weight: 700; color: #6b46c1; }
+    .stat-label { font-size: 13px; color: #888; }
+    .toast { position: fixed; top: 20px; right: 20px; background: #48bb78; color: white; padding: 12px 24px; border-radius: 10px; font-size: 14px; z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast.error { background: #e53e3e; }
+    .psid { font-family: monospace; font-size: 12px; color: #888; }
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .card { padding: 16px; }
+      .tabs { gap: 4px; }
+      .tab { padding: 8px 14px; font-size: 13px; }
+      table { font-size: 13px; }
+      th, td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>意轉靈升 管理後台</h1>
+    <a href="/admin/logout">登出</a>
+  </div>
+
+  <div class="container">
+    <div class="stat-row" id="stats"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-panel="broadcast">群發訊息</div>
+      <div class="tab" data-panel="schedule">排程發送</div>
+      <div class="tab" data-panel="subscribers">訂閱者名單</div>
+      <div class="tab" data-panel="history">發送紀錄</div>
+    </div>
+
+    <!-- 群發訊息 -->
+    <div class="panel active" id="broadcast">
+      <div class="card">
+        <h2>立即群發訊息</h2>
+        <div class="warning">
+          ⚠️ 注意：勾選「活動提醒標籤」只能用在活動相關提醒（如 Zoom 連結、時間通知）。<br>
+          用來發廣告或推銷可能會被 Facebook 封鎖機器人。
+        </div>
+        <div class="form-group">
+          <span class="form-label">發送對象</span>
+          <select id="bc-target">
+            <option value="all">所有訂閱者</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <span class="form-label">訊息內容</span>
+          <textarea id="bc-text" placeholder="輸入要群發的訊息內容..."></textarea>
+        </div>
+        <label>
+          <input type="checkbox" id="bc-tag">
+          使用活動提醒標籤（可發送給超過 24 小時未互動的用戶）
+        </label>
+        <button class="btn btn-primary" id="bc-send" onclick="sendBroadcast()">立即發送</button>
+      </div>
+    </div>
+
+    <!-- 排程發送 -->
+    <div class="panel" id="schedule">
+      <div class="card">
+        <h2>排程發送訊息</h2>
+        <div class="form-group">
+          <span class="form-label">發送對象</span>
+          <select id="sc-target">
+            <option value="all">所有訂閱者</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <span class="form-label">發送時間</span>
+          <input type="datetime-local" id="sc-time">
+        </div>
+        <div class="form-group">
+          <span class="form-label">訊息內容</span>
+          <textarea id="sc-text" placeholder="輸入要排程發送的訊息..."></textarea>
+        </div>
+        <label>
+          <input type="checkbox" id="sc-tag">
+          使用活動提醒標籤
+        </label>
+        <button class="btn btn-primary" onclick="addSchedule()">設定排程</button>
+      </div>
+
+      <div class="card">
+        <h2>已排程的訊息</h2>
+        <div id="scheduled-list"></div>
+      </div>
+    </div>
+
+    <!-- 訂閱者名單 -->
+    <div class="panel" id="subscribers">
+      <div class="card">
+        <h2>訂閱者名單</h2>
+        <div id="subscriber-list"></div>
+      </div>
+    </div>
+
+    <!-- 發送紀錄 -->
+    <div class="panel" id="history">
+      <div class="card">
+        <h2>發送紀錄</h2>
+        <div id="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.panel).classList.add('active');
+      });
+    });
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '-';
+      const d = new Date(iso);
+      return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+    }
+
+    function truncate(str, len) {
+      if (!str) return '';
+      return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    async function api(method, path, body) {
+      const opts = { method, headers: {} };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch('/admin/api' + path, opts);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '操作失敗');
+      return data;
+    }
+
+    // Load data
+    let subscriberData = [];
+    let events = new Set();
+
+    async function loadAll() {
+      try {
+        subscriberData = await api('GET', '/subscribers');
+        const scheduled = await api('GET', '/scheduled');
+        const history = await api('GET', '/history');
+
+        // Collect unique events
+        events = new Set();
+        subscriberData.forEach(s => (s.events || []).forEach(e => events.add(e)));
+
+        renderStats(subscriberData, scheduled, history);
+        renderSubscribers(subscriberData);
+        renderScheduled(scheduled);
+        renderHistory(history);
+        renderTargetOptions();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    function renderStats(subs, scheduled, history) {
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-card"><div class="stat-num">${subs.length}</div><div class="stat-label">訂閱者</div></div>
+        <div class="stat-card"><div class="stat-num">${scheduled.length}</div><div class="stat-label">待發送排程</div></div>
+        <div class="stat-card"><div class="stat-num">${history.length}</div><div class="stat-label">已發送次數</div></div>
+      `;
+    }
+
+    function renderTargetOptions() {
+      const options = '<option value="all">所有訂閱者</option>' +
+        [...events].map(e => `<option value="event:${e}">活動: ${e}</option>`).join('');
+      document.getElementById('bc-target').innerHTML = options;
+      document.getElementById('sc-target').innerHTML = options;
+    }
+
+    function renderSubscribers(subs) {
+      if (subs.length === 0) {
+        document.getElementById('subscriber-list').innerHTML = '<div class="empty">還沒有訂閱者<br>有人發訊息給機器人後就會出現在這裡</div>';
+        return;
+      }
+      let html = '<div style="overflow-x:auto"><table><thead><tr><th>PSID</th><th>姓名</th><th>手機</th><th>Email</th><th>報名活動</th><th>最後互動</th></tr></thead><tbody>';
+      subs.forEach(s => {
+        html += `<tr>
+          <td class="psid">${s.psid.substring(0, 8)}...</td>
+          <td>${s.name || '-'}</td>
+          <td>${s.phone || '-'}</td>
+          <td>${s.email || '-'}</td>
+          <td>${(s.events || []).join(', ') || '-'}</td>
+          <td>${formatDate(s.lastInteraction)}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('subscriber-list').innerHTML = html;
+    }
+
+    function renderScheduled(list) {
+      if (list.length === 0) {
+        document.getElementById('scheduled-list').innerHTML = '<div class="empty">目前沒有排程中的訊息</div>';
+        return;
+      }
+      let html = '<div style="overflow-x:auto"><table><thead><tr><th>發送時間</th><th>對象</th><th>訊息</th><th>活動標籤</th><th>操作</th></tr></thead><tbody>';
+      list.forEach(m => {
+        html += `<tr>
+          <td>${formatDate(m.sendAt)}</td>
+          <td>${m.targetGroup === 'all' ? '全部' : m.targetGroup.replace('event:', '活動: ')}</td>
+          <td>${truncate(m.text, 40)}</td>
+          <td>${m.useEventTag ? '<span class="badge badge-green">是</span>' : '否'}</td>
+          <td><button class="btn btn-danger" onclick="cancelSchedule('${m.id}')">取消</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('scheduled-list').innerHTML = html;
+    }
+
+    function renderHistory(list) {
+      if (list.length === 0) {
+        document.getElementById('history-list').innerHTML = '<div class="empty">還沒有發送紀錄</div>';
+        return;
+      }
+      let html = '<div style="overflow-x:auto"><table><thead><tr><th>時間</th><th>訊息</th><th>發送</th><th>成功</th><th>失敗</th></tr></thead><tbody>';
+      list.forEach(h => {
+        html += `<tr>
+          <td>${formatDate(h.sentAt)}</td>
+          <td>${truncate(h.text, 40)}</td>
+          <td>${h.recipientCount}</td>
+          <td><span class="badge badge-green">${h.successCount}</span></td>
+          <td>${h.failCount > 0 ? '<span class="badge badge-red">' + h.failCount + '</span>' : '0'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('history-list').innerHTML = html;
+    }
+
+    async function sendBroadcast() {
+      const text = document.getElementById('bc-text').value;
+      const target = document.getElementById('bc-target').value;
+      const useTag = document.getElementById('bc-tag').checked;
+
+      if (!text.trim()) return showToast('請輸入訊息內容', true);
+      if (!confirm(`確定要立即發送訊息給${target === 'all' ? '所有訂閱者' : target}嗎？`)) return;
+
+      const btn = document.getElementById('bc-send');
+      btn.disabled = true;
+      btn.textContent = '發送中...';
+
+      try {
+        const result = await api('POST', '/broadcast', { text, targetGroup: target, useEventTag: useTag });
+        showToast(`發送完成！成功 ${result.successCount} 人，失敗 ${result.failCount} 人`);
+        document.getElementById('bc-text').value = '';
+        loadAll();
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '立即發送';
+      }
+    }
+
+    async function addSchedule() {
+      const text = document.getElementById('sc-text').value;
+      const sendAt = document.getElementById('sc-time').value;
+      const target = document.getElementById('sc-target').value;
+      const useTag = document.getElementById('sc-tag').checked;
+
+      if (!text.trim()) return showToast('請輸入訊息內容', true);
+      if (!sendAt) return showToast('請選擇發送時間', true);
+
+      try {
+        await api('POST', '/schedule', { text, sendAt, targetGroup: target, useEventTag: useTag });
+        showToast('排程已設定！');
+        document.getElementById('sc-text').value = '';
+        document.getElementById('sc-time').value = '';
+        loadAll();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function cancelSchedule(id) {
+      if (!confirm('確定要取消這則排程嗎？')) return;
+      try {
+        await api('DELETE', '/schedule/' + id);
+        showToast('排程已取消');
+        loadAll();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    // Init
+    loadAll();
+    setInterval(loadAll, 30000);
+  </script>
+</body>
+</html>
