@@ -49,6 +49,11 @@
       "addLineLink": true
     },
     {
+      "triggers": ["如何報名", "我要報名", "怎麼報名", "想報名"],
+      "reply": "想報名太好了 ✨\n\n請問你想報名的是哪一個呢？\n\n💰 財富流動免費線上分享會\n  近期場次：7/29、8/7、8/16 晚上 8:00-9:30\n  報名請留：稱呼、手機、Email\n\n🧠 人生轉換術（兩天線上課程 NT$8,800）\n\n🔮 元辰宮療癒\n\n告訴我你有興趣的，我幫你安排 ❤️",
+      "addLineLink": true
+    },
+    {
       "triggers": ["LINE", "line", "加line", "加LINE", "賴"],
       "reply": "歡迎加入我們的 LINE 官方帳號 ❤️\n品慧老師會在 LINE 上親自回覆你喔！",
       "addLineLink": true
