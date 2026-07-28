@@ -111,9 +111,10 @@ async function callSendAPI(requestBody) {
   }
 }
 
-// 健康檢查
+// 健康檢查（含版本標記，用來確認部署是否更新）
+const BOT_VERSION = "v2.1-20260728";
 app.get("/", (_req, res) => {
-  res.send("品慧老師 Messenger 機器人運作中 ✅");
+  res.send(`品慧老師 Messenger 機器人運作中 ✅ 版本: ${BOT_VERSION}`);
 });
 
 const PORT = process.env.PORT || 3000;
