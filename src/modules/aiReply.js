@@ -34,16 +34,22 @@ function addToHistory(senderId, role, content) {
 async function getAIReply(senderId, messageText) {
   addToHistory(senderId, "user", messageText);
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 300,
-    system: SYSTEM_PROMPT,
-    messages: getHistory(senderId),
-  });
+  try {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 300,
+      system: SYSTEM_PROMPT,
+      messages: getHistory(senderId),
+    });
 
-  const reply = response.content[0].text;
-  addToHistory(senderId, "assistant", reply);
-  return reply;
+    const reply = response.content[0].text;
+    addToHistory(senderId, "assistant", reply);
+    return reply;
+  } catch (err) {
+    console.error("Claude API 錯誤詳情:", err.status, err.message);
+    console.error("錯誤類型:", err.constructor.name);
+    throw err;
+  }
 }
 
 module.exports = { getAIReply };
