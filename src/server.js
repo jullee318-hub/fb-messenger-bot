@@ -71,7 +71,7 @@ async function handleMessage(senderId, text) {
     console.error("處理訊息時發生錯誤:", err.message);
     await sendTextMessage(
       senderId,
-      "不好意思，小助手暫時忙不過來 😅\n請直接加 LINE 跟老師聯繫喔！"
+      "不好意思，小助手這邊剛好忙了一下 😊\n你的訊息我收到了！\n\n你可以再傳一次，或者直接加 LINE 跟品慧老師聊聊，\n老師會親自回覆你 ❤️"
     );
     await sendLineButton(senderId);
   }
