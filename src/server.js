@@ -92,7 +92,7 @@ async function handleMessage(senderId, text) {
     } else {
       await sendTextMessage(
         senderId,
-        "不好意思，小助手這邊剛好忙了一下 😊\n你的訊息我收到了！\n\n你可以再傳一次，或者直接加 LINE 跟品慧老師聊聊，\n老師會親自回覆你 ❤️"
+        "嗨～你的訊息我收到了 ❤️\n\n這個問題讓老師親自跟你聊會更好～\n\n點下面加 LINE，老師會親自回覆你喔 ✨"
       );
       await sendLineButton(senderId);
     }
@@ -122,7 +122,7 @@ async function sendLineButton(recipientId) {
 app.use("/admin", adminRoutes);
 
 // 健康檢查
-const BOT_VERSION = "v5.0-ai-first";
+const BOT_VERSION = "v5.1-robust";
 app.get("/", (_req, res) => {
   res.send(`品慧老師 Messenger 機器人運作中 ✅ 版本: ${BOT_VERSION}`);
 });
