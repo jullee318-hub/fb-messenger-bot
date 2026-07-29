@@ -114,7 +114,7 @@ async function sendLineButton(recipientId) {
 app.use("/admin", adminRoutes);
 
 // 健康檢查
-const BOT_VERSION = "v4.3-sonnet5";
+const BOT_VERSION = "v4.4-smart-keyword";
 app.get("/", (_req, res) => {
   res.send(`品慧老師 Messenger 機器人運作中 ✅ 版本: ${BOT_VERSION}`);
 });
