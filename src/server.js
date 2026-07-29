@@ -57,6 +57,27 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+function getWarmFallback(text) {
+  if (text.includes("潛意識電影院") || text.includes("體驗") || text.includes("IVC")) {
+    return "你對潛意識電影院有興趣呀～很棒！✨\n\n這個體驗每個人的感受都不一樣，老師會親自幫你了解最適合你的方式 ❤️\n\n加 LINE 跟老師聊聊，她會跟你分享更多喔～";
+  }
+  if (text.includes("元辰宮")) {
+    return "你想了解元辰宮呀 ✨\n\n每個人的元辰宮都是獨一無二的，老師會根據你的狀況給你最合適的建議 ❤️\n\n加 LINE 跟老師聊聊你的情況吧～";
+  }
+  if (text.includes("課程") || text.includes("報名") || text.includes("多少錢") || text.includes("價格")) {
+    return "想了解更多對嗎？你的眼光很好 ✨\n\n加 LINE 跟老師聊聊，老師會幫你找到最適合你現在階段的方向 ❤️";
+  }
+  if (text.includes("退費") || text.includes("不滿") || text.includes("退款")) {
+    return "你的感受很重要 ❤️\n\n這個部分老師會親自跟你好好聊聊，幫你處理。\n\n加 LINE 直接跟老師說，老師一定會好好了解你的狀況 ✨";
+  }
+  const fallbacks = [
+    "你問的這個很好 ✨\n\n老師本人回答你會更到位～\n\n加 LINE 跟老師聊聊，她會親自回覆你 ❤️",
+    "嗯嗯，這個問題很值得好好聊 ✨\n\n加 LINE 讓老師親自跟你分享，會比文字更有溫度 ❤️",
+    "謝謝你願意問 ✨\n\n這個老師跟你直接聊會更清楚～\n\n加 LINE 吧，老師會好好回覆你 ❤️",
+  ];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
 async function handleMessage(senderId, text) {
   console.log(`收到訊息 [${senderId}]: ${text}`);
 
@@ -74,7 +95,7 @@ async function handleMessage(senderId, text) {
     await sendTextMessage(senderId, aiReply);
 
     // AI 回覆成功後，如果內容跟需要加 LINE 的主題相關，補上 LINE 按鈕
-    const lineTopics = ["LINE", "line", "加line", "元辰宮", "療癒", "預約", "報名"];
+    const lineTopics = ["LINE", "line", "加line", "元辰宮", "療癒", "預約", "報名", "潛意識電影院", "體驗", "IVC"];
     const needLine = lineTopics.some(t => text.includes(t) || aiReply.includes("LINE"));
     if (needLine) {
       await sendLineButton(senderId);
@@ -90,10 +111,8 @@ async function handleMessage(senderId, text) {
         await sendLineButton(senderId);
       }
     } else {
-      await sendTextMessage(
-        senderId,
-        "嗨～你的訊息我收到了 ❤️\n\n這個問題讓老師親自跟你聊會更好～\n\n點下面加 LINE，老師會親自回覆你喔 ✨"
-      );
+      const warmFallback = getWarmFallback(text);
+      await sendTextMessage(senderId, warmFallback);
       await sendLineButton(senderId);
     }
   }

@@ -34,14 +34,31 @@ function addToHistory(senderId, role, content) {
   conversationHistory.set(senderId, entry);
 }
 
-async function callClaude(model, messages) {
-  const response = await client.messages.create({
-    model,
-    max_tokens: 500,
-    system: SYSTEM_PROMPT,
-    messages,
-  });
-  return response.content[0].text;
+async function callClaude(model, messages, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await client.messages.create({
+        model,
+        max_tokens: 500,
+        system: SYSTEM_PROMPT,
+        messages,
+      });
+      return response.content[0].text;
+    } catch (err) {
+      console.error(
+        `[callClaude] ${model} 第${attempt + 1}次嘗試失敗:`,
+        `status=${err.status}`,
+        `type=${err.error?.error?.type || "unknown"}`,
+        `msg=${err.message}`
+      );
+      if (attempt < retries && (!err.status || err.status >= 500 || err.status === 429)) {
+        console.log(`等待 2 秒後重試...`);
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 async function getAIReply(senderId, messageText) {
