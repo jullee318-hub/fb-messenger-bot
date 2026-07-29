@@ -69,25 +69,33 @@ async function handleMessage(senderId, text) {
   upsertSubscriber(senderId, updateFields);
 
   try {
-    const keywordMatch = findKeywordMatch(text);
+    // AI 優先：讓 Sonnet 5 接住每一個問題
+    const aiReply = await getAIReply(senderId, text);
+    await sendTextMessage(senderId, aiReply);
 
+    // AI 回覆成功後，如果內容跟需要加 LINE 的主題相關，補上 LINE 按鈕
+    const lineTopics = ["LINE", "line", "加line", "元辰宮", "療癒", "預約", "報名"];
+    const needLine = lineTopics.some(t => text.includes(t) || aiReply.includes("LINE"));
+    if (needLine) {
+      await sendLineButton(senderId);
+    }
+  } catch (err) {
+    console.error("AI 回覆失敗，改用關鍵字回覆:", err.message);
+
+    // AI 失敗時，用關鍵字罐頭回覆當備用
+    const keywordMatch = findKeywordMatch(text);
     if (keywordMatch) {
       await sendTextMessage(senderId, keywordMatch.reply);
       if (keywordMatch.addLineLink) {
         await sendLineButton(senderId);
       }
-      return;
+    } else {
+      await sendTextMessage(
+        senderId,
+        "不好意思，小助手這邊剛好忙了一下 😊\n你的訊息我收到了！\n\n你可以再傳一次，或者直接加 LINE 跟品慧老師聊聊，\n老師會親自回覆你 ❤️"
+      );
+      await sendLineButton(senderId);
     }
-
-    const aiReply = await getAIReply(senderId, text);
-    await sendTextMessage(senderId, aiReply);
-  } catch (err) {
-    console.error("處理訊息時發生錯誤:", err.message);
-    await sendTextMessage(
-      senderId,
-      "不好意思，小助手這邊剛好忙了一下 😊\n你的訊息我收到了！\n\n你可以再傳一次，或者直接加 LINE 跟品慧老師聊聊，\n老師會親自回覆你 ❤️"
-    );
-    await sendLineButton(senderId);
   }
 }
 
@@ -114,7 +122,7 @@ async function sendLineButton(recipientId) {
 app.use("/admin", adminRoutes);
 
 // 健康檢查
-const BOT_VERSION = "v4.4-smart-keyword";
+const BOT_VERSION = "v5.0-ai-first";
 app.get("/", (_req, res) => {
   res.send(`品慧老師 Messenger 機器人運作中 ✅ 版本: ${BOT_VERSION}`);
 });
