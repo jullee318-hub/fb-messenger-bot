@@ -85,13 +85,7 @@ async function callClaude(model, messages, retries = 1) {
       const response = await client.messages.create({
         model,
         max_tokens: 500,
-        system: [
-          {
-            type: "text",
-            text: SYSTEM_PROMPT,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
+        system: SYSTEM_PROMPT,
         messages: safeMessages,
       });
       return response.content[0].text;
